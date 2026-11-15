@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -20,16 +21,36 @@ pipeline {
             }
         }
 
-        stage('Publish Test Results') {
+        stage('Package Application') {
             steps {
-                junit 'reports/test-results.xml'
+                sh '''
+                    mkdir -p dist
+                    tar -czf dist/calculator-app.tar.gz app/calculator.py
+                    echo "Application package created"
+                    ls -lh dist/
+                '''
             }
         }
+    }
 
-        stage('Build Complete') {
-            steps {
-                echo 'Python Calculator CI Pipeline completed successfully!'
-            }
+    post {
+        always {
+            echo 'Publishing test results...'
+            junit allowEmptyResults: true,
+                  testResults: 'reports/test-results.xml'
+
+            echo 'Archiving build artifacts...'
+            archiveArtifacts artifacts: 'dist/calculator-app.tar.gz,reports/test-results.xml',
+                             allowEmptyArchive: true,
+                             fingerprint: true
+        }
+
+        success {
+            echo 'CI PIPELINE COMPLETED SUCCESSFULLY!'
+        }
+
+        failure {
+            echo 'CI PIPELINE FAILED. Check the logs.'
         }
     }
 }
