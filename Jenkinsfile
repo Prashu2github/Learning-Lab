@@ -16,7 +16,13 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                sh 'python3 -m unittest discover -s tests -v'
+                sh 'python3 -m pytest tests/ -v --junitxml=reports/test-results.xml'
+            }
+        }
+
+        stage('Publish Test Results') {
+            steps {
+                junit 'reports/test-results.xml'
             }
         }
 
